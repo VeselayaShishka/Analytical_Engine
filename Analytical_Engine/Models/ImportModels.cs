@@ -8,7 +8,15 @@ public record Metadata(Guid DatasetId,
     string Format,
     DateTime CreatedAt);
 
-public record Schema(Dictionary<string, string> Fields);
+public record SchemaField(
+    string Type,
+    bool IsNullable = false,
+    String? Description = null
+);
+
+public record Schema(
+    Dictionary<string, SchemaField> Fields
+);
 
 public record RecordData(int RowNumber, Dictionary<string, object?> Content);
 

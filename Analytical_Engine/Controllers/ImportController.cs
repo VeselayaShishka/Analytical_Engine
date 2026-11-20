@@ -3,12 +3,14 @@ using System.Text.Json;
 using Analytical_Engine.Models;
 using Analytical_Engine.Models.DTOs.Imports;
 using Analytical_Engine.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Analytical_Engine.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = $"{Roles.Analyst},{Roles.DataAdministrator}")]
 public class ImportController : ControllerBase
 {
     private readonly CSVImportService _csvImportService;
@@ -47,21 +49,59 @@ public class ImportController : ControllerBase
 
         Dictionary<string, string>? fields;
 
+        Schema? schema;
+
         try
         {
-            fields = JsonSerializer.Deserialize<Dictionary<string, string>>(
-                request.SchemaJson);
+            schema = JsonSerializer.Deserialize<Schema>(
+                request.SchemaJson,
+                new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
         }
         catch (JsonException)
         {
             return BadRequest("Invalid schema JSON.");
         }
 
-        if (fields == null || fields.Count == 0)
+        if (schema?.Fields == null || schema.Fields.Count == 0)
             return BadRequest("Schema cannot be empty.");
 
-        var schema = new Schema(fields);
+        var supportedTypes = new HashSet<string>(
+            StringComparer.OrdinalIgnoreCase)
+        {
+            "string",
+            "int",
+            "integer",
+            "long",
+            "decimal",
+            "double",
+            "bool",
+            "boolean",
+            "datetime"
+        };
 
+        foreach (var field in schema.Fields)
+        {
+            if (string.IsNullOrWhiteSpace(field.Key))
+                return BadRequest("Schema contains an empty field name.");
+
+            if (field.Value == null ||
+                string.IsNullOrWhiteSpace(field.Value.Type))
+            {
+                return BadRequest(
+                    $"Type is not specified for field '{field.Key}'.");
+            }
+
+            if (!supportedTypes.Contains(field.Value.Type))
+            {
+                return BadRequest(
+                    $"Unsupported type '{field.Value.Type}' " +
+                    $"for field '{field.Key}'.");
+            }
+        }
+        
         var email = User.FindFirst(ClaimTypes.Email)?.Value;
 
         if (string.IsNullOrWhiteSpace(email))

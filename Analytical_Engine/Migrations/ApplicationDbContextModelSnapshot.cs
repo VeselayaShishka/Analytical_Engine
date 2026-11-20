@@ -155,6 +155,46 @@ namespace Analytical_Engine.Migrations
                     b.ToTable("DatasetVersions");
                 });
 
+            modelBuilder.Entity("Analytical_Engine.Models.Entities.ErrorLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("DatasetId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ErrorType")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTime>("OccurredAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Operation")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("StackTrace")
+                        .HasMaxLength(8000)
+                        .HasColumnType("character varying(8000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DatasetId");
+
+                    b.HasIndex("OccurredAt");
+
+                    b.ToTable("ErrorLogs");
+                });
+
             modelBuilder.Entity("Analytical_Engine.Models.Entities.Report", b =>
                 {
                     b.Property<Guid>("Id")

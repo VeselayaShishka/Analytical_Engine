@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text.Json;
 using Analytical_Engine.Data.Repositories.Interfaces;
@@ -9,21 +10,11 @@ namespace Analytical_Engine.Services;
 
 public abstract class BaseImportService : IImportService
 {
-    private readonly IUserRepository _userRepository;
-    private readonly IDatasetVersionRepository _datasetVersionRepository;
-    private readonly IDatasetRepository _datasetRepository;
-    private readonly IDataRecordRepository _dataRecordRepository;
+    private readonly IUnitOfWork _unitOfWork;
 
-    protected BaseImportService(
-        IUserRepository userRepository,
-        IDatasetVersionRepository datasetVersionRepository,
-        IDatasetRepository datasetRepository,
-        IDataRecordRepository dataRecordRepository)
+    protected BaseImportService(IUnitOfWork unitOfWork)
     {
-        _userRepository = userRepository;
-        _datasetVersionRepository = datasetVersionRepository;
-        _datasetRepository = datasetRepository;
-        _dataRecordRepository = dataRecordRepository;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<ImportResult> ImportDataset(
@@ -37,91 +28,141 @@ public abstract class BaseImportService : IImportService
                 throw new InvalidOperationException(
                     "File stream must support seeking.");
 
-            // 1. Проверка пользователя и принадлежности датасета
             await CheckUserPermissionsAsync(metadata);
 
-            // 2. Проверка формата файла
             fileStream.Position = 0;
             ValidateFileFormat(fileStream);
 
-            // 3. Вычисление SHA256
             string hash = ComputeSHA256(fileStream);
 
-            // 4. Проверка повторного импорта
-            var duplicateResult = await VersionExistsAsync(hash);
+            var existingVersion =
+                await _unitOfWork.DatasetVersions
+                    .GetByDatasetIdAndHashAsync(metadata.DatasetId, hash);
 
-            if (duplicateResult != null)
-                return duplicateResult;
+            if (existingVersion != null)
+            {
+                return new ImportResult(
+                    false,
+                    "This file has already been imported into this dataset.",
+                    existingVersion,
+                    new List<ImportError>());
+            }
 
-            // 5. Проверка структуры файла
             fileStream.Position = 0;
             ValidateFileStructure(fileStream, schema);
 
-            // 6. Создание новой версии
-            DatasetVersion version =
-                await CreateNewVersionAsync(metadata, hash);
+            await _unitOfWork.BeginTransactionAsync();
 
-            var errors = new List<ImportError>();
-
-            long importedRecords = 0;
-
-            // 7. Чтение, проверка и сохранение записей
-            fileStream.Position = 0;
-
-            foreach (var record in ReadRecords(fileStream))
+            try
             {
-                var recordErrors = ValidateRecord(record, schema);
+                DatasetVersion version =
+                    await CreateNewVersionAsync(metadata, hash);
 
-                if (recordErrors.Count > 0)
+                var columns = schema.Fields
+                    .Select((field, index) => new DatasetColumn
+                    {
+                        Id = Guid.NewGuid(),
+                        DatasetVersionId = version.Id,
+                        Name = field.Key,
+                        DataType = field.Value.Type,
+                        IsNullable = field.Value.IsNullable,
+                        Position = index,
+                        Description = field.Value.Description
+                    })
+                    .ToList();
+
+                foreach (var column in columns)
                 {
-                    WriteErrors(version, record.RowNumber, recordErrors);
-                    errors.Add(new ImportError(
-                        record.RowNumber,
-                        recordErrors));
-
-                    continue;
+                    await _unitOfWork.DatasetColumns.AddAsync(column);
                 }
 
-                await SaveRecordAsync(version, record);
+                version.Columns = columns;
 
-                importedRecords++;
+                var errors = new List<ImportError>();
+                long importedRecords = 0;
+
+                fileStream.Position = 0;
+
+                foreach (var record in ReadRecords(fileStream))
+                {
+                    var recordErrors = ValidateRecord(record, schema);
+
+                    if (recordErrors.Count > 0)
+                    {
+                        errors.Add(
+                            new ImportError(record.RowNumber, recordErrors));
+
+                        continue;
+                    }
+
+                    await SaveRecordAsync(version, record);
+                    importedRecords++;
+                }
+
+                version.RecordCount = importedRecords;
+
+                await _unitOfWork.SaveChangesAsync();
+                await _unitOfWork.CommitTransactionAsync();
+
+                return ReturnImportResult(version, errors);
             }
-
-            // 8. Обновление статистики
-            version.RecordCount = importedRecords;
-
-            // 9. Сохранение изменений в БД
-            await _datasetVersionRepository.SaveChangesAsync();
-
-            // 10. Возвращение результата
-            return ReturnImportResult(version, errors);
+            catch
+            {
+                await _unitOfWork.RollbackTransactionAsync();
+                throw;
+            }
         }
         catch (Exception ex)
         {
             HandleError(ex);
 
+            _unitOfWork.ClearTracker();
+
+            try
+            {
+                await _unitOfWork.ErrorLogs.AddAsync(new ErrorLog
+                {
+                    Id = Guid.NewGuid(),
+                    DatasetId = metadata.DatasetId,
+                    Operation = "DatasetImport",
+                    ErrorType = ex.GetType().Name,
+                    Message = ex.Message,
+                    StackTrace = ex.StackTrace,
+                    OccurredAt = DateTime.UtcNow
+                });
+
+                await _unitOfWork.SaveChangesAsync();
+            }
+            catch (Exception loggingException)
+            {
+                Console.WriteLine(
+                    $"[ErrorLog persistence failed]: {loggingException}");
+            }
+
             return new ImportResult(
                 false,
-                $"Import error: {ex.Message}");
+                $"Import error: {ex.Message}",
+                null,
+                new List<ImportError>());
         }
     }
 
     protected async Task CheckUserPermissionsAsync(Metadata metadata)
     {
-        //TODO valid or being checked earlier
-        var user = await _userRepository.GetByEmailAsync(metadata.Email);
+        var user = await _unitOfWork.Users
+            .GetByEmailAsync(metadata.Email);
 
         if (user == null || !user.IsActive)
             throw new UnauthorizedAccessException(
                 "User does not exist or is inactive.");
 
-        var dataset = await _datasetRepository.GetByIdAsync(
-            metadata.DatasetId);
+        var dataset = await _unitOfWork.Datasets
+            .GetByIdAsync(metadata.DatasetId);
 
         if (dataset == null)
             throw new KeyNotFoundException("Dataset not found.");
 
-        if (dataset.UserId != user.Id)
+        if (user.Role != Roles.DataAdministrator && dataset.UserId != user.Id)
             throw new UnauthorizedAccessException(
                 "User does not have access to this dataset.");
     }
@@ -139,32 +180,13 @@ public abstract class BaseImportService : IImportService
         return Convert.ToHexString(hashBytes);
     }
 
-    protected async Task<ImportResult?> VersionExistsAsync(string hash)
-    {
-        var existingVersion =
-            await _datasetVersionRepository.GetByHashAsync(hash);
-
-        if (existingVersion != null)
-            return ReturnDuplicateImportMessage(hash);
-
-        return null;
-    }
-
-    protected virtual ImportResult ReturnDuplicateImportMessage(
-        string hash)
-    {
-        return new ImportResult(
-            false,
-            $"File with hash '{hash}' already exists.");
-    }
-
     protected virtual async Task<DatasetVersion> CreateNewVersionAsync(
         Metadata metadata,
         string hash)
     {
         var latestVersion =
-            await _datasetVersionRepository.GetLatestVersionAsync(
-                metadata.DatasetId);
+            await _unitOfWork.DatasetVersions
+                .GetLatestVersionAsync(metadata.DatasetId);
 
         var version = new DatasetVersion
         {
@@ -178,7 +200,7 @@ public abstract class BaseImportService : IImportService
             Created = DateTime.UtcNow
         };
 
-        await _datasetVersionRepository.AddAsync(version);
+        await _unitOfWork.DatasetVersions.AddAsync(version);
 
         return version;
     }
@@ -191,20 +213,26 @@ public abstract class BaseImportService : IImportService
 
         foreach (var field in schema.Fields)
         {
-            if (!record.Content.TryGetValue(
-                    field.Key, out var value) || value == null)
+            var fieldName = field.Key;
+            var fieldSchema = field.Value;
+
+            if (!record.Content.TryGetValue(fieldName, out var value) ||
+                value == null)
             {
-                errors.Add(
-                    $"Field '{field.Key}' is absent or NULL.");
+                if (!fieldSchema.IsNullable)
+                {
+                    errors.Add(
+                        $"Field '{fieldName}' is absent or NULL.");
+                }
 
                 continue;
             }
 
-            if (!IsValidType(value, field.Value))
+            if (!IsValidType(value, fieldSchema.Type))
             {
                 errors.Add(
-                    $"Field '{field.Key}' has invalid type. " +
-                    $"Expected: {field.Value}.");
+                    $"Field '{fieldName}' has invalid type. " +
+                    $"Expected: {fieldSchema.Type}.");
             }
         }
 
@@ -213,31 +241,74 @@ public abstract class BaseImportService : IImportService
 
     private bool IsValidType(object value, string expectedType)
     {
-        string stringValue = value.ToString() ?? string.Empty;
+        if (value is JsonElement jsonElement)
+        {
+            value = jsonElement.ValueKind switch
+            {
+                JsonValueKind.String => jsonElement.GetString()!,
+                JsonValueKind.Number => jsonElement.GetRawText(),
+                JsonValueKind.True => true,
+                JsonValueKind.False => false,
+                _ => jsonElement.GetRawText()
+            };
+        }
+
+        if (value is bool)
+        {
+            return expectedType.ToLowerInvariant() switch
+            {
+                "bool" or "boolean" => true,
+                "string" => true,
+                _ => false
+            };
+        }
+
+        string stringValue = Convert.ToString(
+            value,
+            CultureInfo.InvariantCulture) ?? string.Empty;
 
         return expectedType.ToLowerInvariant() switch
         {
             "string" => true,
+
             "int" or "integer" =>
-                int.TryParse(stringValue, out _),
+                int.TryParse(
+                    stringValue,
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out _),
+
             "long" =>
-                long.TryParse(stringValue, out _),
+                long.TryParse(
+                    stringValue,
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out _),
+
             "decimal" =>
                 decimal.TryParse(
                     stringValue,
                     NumberStyles.Any,
                     CultureInfo.InvariantCulture,
                     out _),
+
             "double" =>
                 double.TryParse(
                     stringValue,
                     NumberStyles.Any,
                     CultureInfo.InvariantCulture,
                     out _),
+
             "bool" or "boolean" =>
                 bool.TryParse(stringValue, out _),
+
             "datetime" =>
-                DateTime.TryParse(stringValue, out _),
+                DateTime.TryParse(
+                    stringValue,
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.None,
+                    out _),
+
             _ => false
         };
     }
@@ -254,19 +325,7 @@ public abstract class BaseImportService : IImportService
             Data = JsonSerializer.Serialize(record.Content)
         };
 
-        await _dataRecordRepository.AddAsync(dataRecord);
-    }
-
-    protected void WriteErrors(
-        DatasetVersion version,
-        int rowNumber,
-        List<string> errors)
-    {
-        Console.WriteLine(
-            $"Import error in version {version.Version}, row {rowNumber}:");
-
-        foreach (var error in errors)
-            Console.WriteLine(error);
+        await _unitOfWork.DataRecords.AddAsync(dataRecord);
     }
 
     protected virtual ImportResult ReturnImportResult(

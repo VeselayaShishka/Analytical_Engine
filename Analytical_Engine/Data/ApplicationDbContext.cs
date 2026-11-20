@@ -16,6 +16,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<DatasetColumn> DatasetColumns => Set<DatasetColumn>();
     public DbSet<DataRecord> DataRecords => Set<DataRecord>();
     public DbSet<Report> Reports => Set<Report>();
+    public DbSet<ErrorLog> ErrorLogs => Set<ErrorLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -150,6 +151,29 @@ public class ApplicationDbContext : DbContext
                 .WithMany(u => u.Reports)
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ErrorLog>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Operation)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            entity.Property(e => e.ErrorType)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            entity.Property(e => e.Message)
+                .IsRequired()
+                .HasMaxLength(4000);
+
+            entity.Property(e => e.StackTrace)
+                .HasMaxLength(8000);
+
+            entity.HasIndex(e => e.OccurredAt);
+            entity.HasIndex(e => e.DatasetId);
         });
     }
 }

@@ -32,9 +32,11 @@ public class DatasetVersionRepository : Repository<DatasetVersion>, IDatasetVers
             .FirstOrDefaultAsync(v => v.Id == versionId, cancellationToken);
     }
 
-    public async Task<DatasetVersion?> GetByHashAsync(String hash, CancellationToken cancellationToken = default)
+    public async Task<DatasetVersion?> GetByDatasetIdAndHashAsync(Guid datasetId, string hash, CancellationToken cancellationToken = default)
     {
-        return await DbSet.FirstOrDefaultAsync(v => v.FileHash.Equals(hash, StringComparison.OrdinalIgnoreCase), cancellationToken);
+        return await DbSet.FirstOrDefaultAsync(
+            v => v.DatasetId == datasetId && v.FileHash == hash,
+            cancellationToken);
     }
 
 }

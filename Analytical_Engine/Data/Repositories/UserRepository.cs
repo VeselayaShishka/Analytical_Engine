@@ -22,4 +22,10 @@ public class UserRepository : Repository<User>, IUserRepository
     {
         return await DbSet.AnyAsync(u => u.Email == email, cancellationToken);
     }
+    
+    public async Task<bool> UsernameExistsAsync(string username, CancellationToken cancellationToken = default)
+    {
+        var normalizedUsername = username.Trim().ToLowerInvariant();
+        return await DbSet.AnyAsync(u => u.Username.ToLower() == normalizedUsername, cancellationToken);
+    }
 }

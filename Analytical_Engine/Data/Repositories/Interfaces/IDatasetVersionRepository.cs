@@ -7,5 +7,5 @@ public interface IDatasetVersionRepository : IRepository<DatasetVersion>
     Task<IReadOnlyList<DatasetVersion>> GetByDatasetIdAsync(Guid datasetId, CancellationToken cancellationToken = default);
     Task<DatasetVersion?> GetLatestVersionAsync(Guid datasetId, CancellationToken cancellationToken = default);
     Task<DatasetVersion?> GetWithColumnsAsync(Guid versionId, CancellationToken cancellationToken = default);
-    Task<DatasetVersion?> GetByHashAsync(String hash, CancellationToken cancellationToken = default);
+    Task<DatasetVersion?> GetByDatasetIdAndHashAsync(Guid datasetId, string hash, CancellationToken cancellationToken = default);
 }
