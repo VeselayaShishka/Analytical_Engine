@@ -188,6 +188,15 @@ public abstract class BaseImportService : IImportService
             await _unitOfWork.DatasetVersions
                 .GetLatestVersionAsync(metadata.DatasetId);
 
+        var dataset =
+            await _unitOfWork.Datasets
+                .GetByIdAsync(metadata.DatasetId);
+
+        if (dataset != null)
+        {
+            dataset.ModifiedAt = DateTime.UtcNow;
+        }
+
         var version = new DatasetVersion
         {
             Id = Guid.NewGuid(),

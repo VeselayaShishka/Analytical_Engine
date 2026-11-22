@@ -75,8 +75,16 @@ builder.Services.AddTransient<JSONImportService>();
 
 builder.Services.AddScoped<IUnitOfWork, EfUnitOfWork>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<Analytical_Engine.Exceptions.GlobalExceptionHandler>();
 
 var app = builder.Build();
+
+await AdminSeeder.SeedAsync(app.Services);
+
+app.UseExceptionHandler();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 

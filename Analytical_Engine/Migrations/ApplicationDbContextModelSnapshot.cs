@@ -40,7 +40,7 @@ namespace Analytical_Engine.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DatasetVersionId");
+                    b.HasIndex("DatasetVersionId", "RowNumber");
 
                     b.ToTable("DataRecords");
                 });
@@ -70,7 +70,8 @@ namespace Analytical_Engine.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "Name")
+                        .IsUnique();
 
                     b.ToTable("Datasets");
                 });

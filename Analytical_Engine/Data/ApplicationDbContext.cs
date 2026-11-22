@@ -66,6 +66,9 @@ public class ApplicationDbContext : DbContext
                 .WithOne(v => v.Dataset)
                 .HasForeignKey(v => v.DatasetId)
                 .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => new { e.UserId, e.Name })
+                .IsUnique();
         });
 
         modelBuilder.Entity<DatasetVersion>(entity =>
@@ -129,6 +132,8 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Data)
                 .HasColumnType("jsonb")
                 .IsRequired();
+            
+            entity.HasIndex(e => new { e.DatasetVersionId, e.RowNumber });
         });
 
         modelBuilder.Entity<Report>(entity =>
