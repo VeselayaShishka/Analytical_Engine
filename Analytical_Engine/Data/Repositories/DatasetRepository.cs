@@ -115,4 +115,30 @@ public class DatasetRepository : Repository<Dataset>, IDatasetRepository
 
         return await query.AnyAsync(cancellationToken);
     }
+    
+    public async Task<(int DatasetsCount, int VersionsCount, long RecordsCount)> GetSummaryMetricsAsync(
+        Guid? userId,
+        CancellationToken cancellationToken = default)
+    {
+        IQueryable<Dataset> query = DbSet.AsNoTracking();
+
+        if (userId.HasValue)
+        {
+            query = query.Where(d => d.UserId == userId.Value);
+        }
+
+        var metrics = await query
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                DatasetsCount = g.Count(),
+                VersionsCount = g.Sum(d => d.Versions.Count()),
+                RecordsCount = g.SelectMany(d => d.Versions).Sum(v => v.RecordCount)
+            })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        return metrics is null
+            ? (0, 0, 0L)
+            : (metrics.DatasetsCount, metrics.VersionsCount, metrics.RecordsCount);
+    }
 }

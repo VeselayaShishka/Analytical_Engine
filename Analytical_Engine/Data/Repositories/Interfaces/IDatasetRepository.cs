@@ -24,4 +24,8 @@ public interface IDatasetRepository : IRepository<Dataset>
         string name,
         Guid? excludeDatasetId = null,
         CancellationToken cancellationToken = default);
+    
+    Task<(int DatasetsCount, int VersionsCount, long RecordsCount)> GetSummaryMetricsAsync(
+        Guid? userId,
+        CancellationToken cancellationToken = default);
 }
