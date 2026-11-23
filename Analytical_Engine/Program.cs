@@ -84,6 +84,8 @@ builder.Services.AddSingleton<AnalysisRequestValidator>();
 builder.Services.AddSingleton<AnalysisEngine>();
 builder.Services.AddScoped<IAnalysisService, AnalysisService>();
 
+builder.Services.AddScoped<IReportService, ReportService>();
+
 var app = builder.Build();
 
 await AdminSeeder.SeedAsync(app.Services);

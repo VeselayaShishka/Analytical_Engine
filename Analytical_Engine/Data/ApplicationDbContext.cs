@@ -156,6 +156,8 @@ public class ApplicationDbContext : DbContext
                 .WithMany(u => u.Reports)
                 .HasForeignKey(e => e.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+            
+            entity.HasIndex(e => new { e.UserId, e.CreatedAt });
         });
 
         modelBuilder.Entity<ErrorLog>(entity =>

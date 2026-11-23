@@ -1,7 +1,6 @@
 ﻿using Analytical_Engine.Extensions;
 using Analytical_Engine.Models;
 using Analytical_Engine.Models.DTOs.Analysis;
-using Analytical_Engine.Services;
 using Analytical_Engine.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

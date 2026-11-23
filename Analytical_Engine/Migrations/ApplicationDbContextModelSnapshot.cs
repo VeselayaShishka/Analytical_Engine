@@ -232,7 +232,7 @@ namespace Analytical_Engine.Migrations
 
                     b.HasIndex("DatasetVersionId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId", "CreatedAt");
 
                     b.ToTable("Reports");
                 });

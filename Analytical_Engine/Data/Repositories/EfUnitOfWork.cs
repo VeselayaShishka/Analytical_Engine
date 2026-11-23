@@ -14,6 +14,7 @@ public class EfUnitOfWork : IUnitOfWork
     private IDatasetColumnRepository? _datasetColumns;
     private IDataRecordRepository? _dataRecords;
     private IErrorLogRepository? _errorLogs;
+    private IReportRepository? _reports;
 
     public EfUnitOfWork(ApplicationDbContext context)
     {
@@ -38,6 +39,9 @@ public class EfUnitOfWork : IUnitOfWork
     public IErrorLogRepository ErrorLogs =>
         _errorLogs ??= new ErrorLogRepository(_context);
 
+    public IReportRepository Reports =>
+        _reports ??= new ReportRepository(_context);
+    
     public async Task BeginTransactionAsync(CancellationToken ct = default)
     {
         _transaction = await _context.Database.BeginTransactionAsync(ct);

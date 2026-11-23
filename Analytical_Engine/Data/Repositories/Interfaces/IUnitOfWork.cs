@@ -8,6 +8,7 @@ public interface IUnitOfWork : IAsyncDisposable
     IDatasetColumnRepository DatasetColumns { get; }
     IDataRecordRepository DataRecords { get; }
     IErrorLogRepository ErrorLogs { get; }
+    IReportRepository Reports { get; }
 
     Task BeginTransactionAsync(CancellationToken ct = default);
     Task CommitTransactionAsync(CancellationToken ct = default);
