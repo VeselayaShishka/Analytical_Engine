@@ -1,6 +1,6 @@
 ﻿using Analytical_Engine.Models.DTOs.Dashboard;
 
-namespace Analytical_Engine.Services;
+namespace Analytical_Engine.Services.Interfaces;
 
 public interface IDashboardService
 {

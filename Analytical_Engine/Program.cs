@@ -5,7 +5,6 @@ using Analytical_Engine.Data.Repositories;
 using Analytical_Engine.Data.Repositories.Interfaces;
 using Analytical_Engine.Models;
 using Analytical_Engine.Services;
-using Analytical_Engine.Services.Analysis;
 using Analytical_Engine.Services.Interfaces;
 using Analytical_Engine.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -79,12 +78,21 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<Analytical_Engine.Exceptions.GlobalExceptionHandler>();
 
-builder.Services.AddSingleton<ColumnValueConverter>();
-builder.Services.AddSingleton<AnalysisRequestValidator>();
-builder.Services.AddSingleton<AnalysisEngine>();
-builder.Services.AddScoped<IAnalysisService, AnalysisService>();
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>() ?? ["http://localhost:5173"];
 
-builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendPolicy", policy =>
+    {
+        policy.WithOrigins(allowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 var app = builder.Build();
 
@@ -93,6 +101,7 @@ await AdminSeeder.SeedAsync(app.Services);
 app.UseExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseCors("FrontendPolicy");
 
 app.MapControllers();
 

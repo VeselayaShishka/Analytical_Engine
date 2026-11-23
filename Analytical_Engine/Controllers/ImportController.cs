@@ -13,6 +13,8 @@ namespace Analytical_Engine.Controllers;
 [Authorize(Roles = $"{Roles.Analyst},{Roles.DataAdministrator}")]
 public class ImportController : ControllerBase
 {
+    private const long MaxImportFileSizeBytes = 52_428_800; // 50 MB
+
     private readonly CSVImportService _csvImportService;
     private readonly JSONImportService _jsonImportService;
 
@@ -25,29 +27,44 @@ public class ImportController : ControllerBase
     }
 
     [HttpPost("dataset")]
+    [RequestSizeLimit(MaxImportFileSizeBytes)]
+    [RequestFormLimits(MultipartBodyLengthLimit = MaxImportFileSizeBytes)]
     public async Task<IActionResult> Import(
         [FromForm] ImportDatasetRequestDto request)
     {
         if (request.File == null || request.File.Length == 0)
-            return BadRequest("File wasn't loaded.");
+        {
+            return Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Bad Request",
+                detail: "File wasn't loaded.");
+        }
 
         var extension = Path.GetExtension(request.File.FileName)
             .ToLowerInvariant();
 
-        IImportService importService = extension switch
+        IImportService? importService = extension switch
         {
             ".csv" => _csvImportService,
             ".json" => _jsonImportService,
-            _ => null!
+            _ => null
         };
 
         if (importService == null)
-            return StatusCode(415, "File type is not supported.");
+        {
+            return Problem(
+                statusCode: StatusCodes.Status415UnsupportedMediaType,
+                title: "Unsupported Media Type",
+                detail: "File type is not supported. Only .csv and .json files are allowed.");
+        }
 
         if (string.IsNullOrWhiteSpace(request.SchemaJson))
-            return BadRequest("Schema is required.");
-
-        Dictionary<string, string>? fields;
+        {
+            return Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Bad Request",
+                detail: "Schema is required.");
+        }
 
         Schema? schema;
 
@@ -62,11 +79,19 @@ public class ImportController : ControllerBase
         }
         catch (JsonException)
         {
-            return BadRequest("Invalid schema JSON.");
+            return Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Bad Request",
+                detail: "Invalid schema JSON.");
         }
 
         if (schema?.Fields == null || schema.Fields.Count == 0)
-            return BadRequest("Schema cannot be empty.");
+        {
+            return Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Bad Request",
+                detail: "Schema cannot be empty.");
+        }
 
         var supportedTypes = new HashSet<string>(
             StringComparer.OrdinalIgnoreCase)
@@ -85,27 +110,39 @@ public class ImportController : ControllerBase
         foreach (var field in schema.Fields)
         {
             if (string.IsNullOrWhiteSpace(field.Key))
-                return BadRequest("Schema contains an empty field name.");
-
-            if (field.Value == null ||
-                string.IsNullOrWhiteSpace(field.Value.Type))
             {
-                return BadRequest(
-                    $"Type is not specified for field '{field.Key}'.");
+                return Problem(
+                    statusCode: StatusCodes.Status400BadRequest,
+                    title: "Bad Request",
+                    detail: "Schema contains an empty field name.");
+            }
+
+            if (field.Value == null || string.IsNullOrWhiteSpace(field.Value.Type))
+            {
+                return Problem(
+                    statusCode: StatusCodes.Status400BadRequest,
+                    title: "Bad Request",
+                    detail: $"Type is not specified for field '{field.Key}'.");
             }
 
             if (!supportedTypes.Contains(field.Value.Type))
             {
-                return BadRequest(
-                    $"Unsupported type '{field.Value.Type}' " +
-                    $"for field '{field.Key}'.");
+                return Problem(
+                    statusCode: StatusCodes.Status400BadRequest,
+                    title: "Bad Request",
+                    detail: $"Unsupported type '{field.Value.Type}' for field '{field.Key}'.");
             }
         }
-        
+
         var email = User.FindFirst(ClaimTypes.Email)?.Value;
 
         if (string.IsNullOrWhiteSpace(email))
-            return Unauthorized();
+        {
+            return Problem(
+                statusCode: StatusCodes.Status401Unauthorized,
+                title: "Unauthorized",
+                detail: "User email claim is missing.");
+        }
 
         var metadata = new Metadata(
             request.DatasetId,
@@ -123,7 +160,17 @@ public class ImportController : ControllerBase
             metadata);
 
         if (!result.IsSuccess)
-            return BadRequest(result);
+        {
+            if (result.Errors.Count > 0)
+            {
+                return BadRequest(result);
+            }
+
+            return Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                title: "Import Error",
+                detail: result.Message);
+        }
 
         return Ok(result);
     }

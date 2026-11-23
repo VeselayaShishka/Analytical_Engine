@@ -1,5 +1,6 @@
 ﻿using Analytical_Engine.Data.Repositories.Interfaces;
 using Analytical_Engine.Models.DTOs.Dashboard;
+using Analytical_Engine.Services.Interfaces;
 
 namespace Analytical_Engine.Services;
 
