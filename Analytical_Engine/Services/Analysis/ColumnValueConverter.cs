@@ -93,7 +93,7 @@ public class ColumnValueConverter
                     return true;
                 }
                 if (element.ValueKind == JsonValueKind.String &&
-                    decimal.TryParse(element.GetString(), NumberStyles.Number, CultureInfo.InvariantCulture, out decVal))
+                    TryParseDecimalString(element.GetString(), out decVal))
                 {
                     value = decVal;
                     return true;
@@ -200,5 +200,25 @@ public class ColumnValueConverter
         var stringValue = Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty;
         using var doc = JsonDocument.Parse(JsonSerializer.Serialize(stringValue));
         return TryConvert(doc.RootElement, expectedType, out var parsed) && parsed is not null;
+    }
+    
+    //Parsing values that may contain ',' as thousands separator
+    private static bool TryParseDecimalString(string? raw, out decimal result)
+    {
+        result = default;
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return false;
+        }
+
+        var span = raw.AsSpan().Trim();
+
+        if (!span.Contains('.') && span.Count(',') == 1)
+        {
+            var normalized = span.ToString().Replace(',', '.');
+            return decimal.TryParse(normalized, NumberStyles.Float, CultureInfo.InvariantCulture, out result);
+        }
+
+        return decimal.TryParse(span, NumberStyles.Float, CultureInfo.InvariantCulture, out result);
     }
 }

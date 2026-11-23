@@ -5,6 +5,7 @@ using Analytical_Engine.Data.Repositories;
 using Analytical_Engine.Data.Repositories.Interfaces;
 using Analytical_Engine.Models;
 using Analytical_Engine.Services;
+using Analytical_Engine.Services.Analysis;
 using Analytical_Engine.Services.Interfaces;
 using Analytical_Engine.Settings;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -77,6 +78,11 @@ builder.Services.AddScoped<IUnitOfWork, EfUnitOfWork>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<Analytical_Engine.Exceptions.GlobalExceptionHandler>();
+
+builder.Services.AddSingleton<ColumnValueConverter>();
+builder.Services.AddSingleton<AnalysisRequestValidator>();
+builder.Services.AddSingleton<AnalysisEngine>();
+builder.Services.AddScoped<IAnalysisService, AnalysisService>();
 
 var app = builder.Build();
 

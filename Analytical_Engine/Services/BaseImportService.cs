@@ -11,6 +11,7 @@ namespace Analytical_Engine.Services;
 public abstract class BaseImportService : IImportService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private static readonly ColumnValueConverter ValueConverter = new();
 
     protected BaseImportService(IUnitOfWork unitOfWork)
     {
@@ -250,76 +251,7 @@ public abstract class BaseImportService : IImportService
 
     private bool IsValidType(object value, string expectedType)
     {
-        if (value is JsonElement jsonElement)
-        {
-            value = jsonElement.ValueKind switch
-            {
-                JsonValueKind.String => jsonElement.GetString()!,
-                JsonValueKind.Number => jsonElement.GetRawText(),
-                JsonValueKind.True => true,
-                JsonValueKind.False => false,
-                _ => jsonElement.GetRawText()
-            };
-        }
-
-        if (value is bool)
-        {
-            return expectedType.ToLowerInvariant() switch
-            {
-                "bool" or "boolean" => true,
-                "string" => true,
-                _ => false
-            };
-        }
-
-        string stringValue = Convert.ToString(
-            value,
-            CultureInfo.InvariantCulture) ?? string.Empty;
-
-        return expectedType.ToLowerInvariant() switch
-        {
-            "string" => true,
-
-            "int" or "integer" =>
-                int.TryParse(
-                    stringValue,
-                    NumberStyles.Integer,
-                    CultureInfo.InvariantCulture,
-                    out _),
-
-            "long" =>
-                long.TryParse(
-                    stringValue,
-                    NumberStyles.Integer,
-                    CultureInfo.InvariantCulture,
-                    out _),
-
-            "decimal" =>
-                decimal.TryParse(
-                    stringValue,
-                    NumberStyles.Any,
-                    CultureInfo.InvariantCulture,
-                    out _),
-
-            "double" =>
-                double.TryParse(
-                    stringValue,
-                    NumberStyles.Any,
-                    CultureInfo.InvariantCulture,
-                    out _),
-
-            "bool" or "boolean" =>
-                bool.TryParse(stringValue, out _),
-
-            "datetime" =>
-                DateTime.TryParse(
-                    stringValue,
-                    CultureInfo.InvariantCulture,
-                    DateTimeStyles.None,
-                    out _),
-
-            _ => false
-        };
+        return ValueConverter.IsValidRawValue(value, expectedType);
     }
 
     protected async Task SaveRecordAsync(

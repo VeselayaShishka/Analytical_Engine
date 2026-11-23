@@ -23,6 +23,25 @@ public class GlobalExceptionHandler : IExceptionHandler
         Exception exception,
         CancellationToken cancellationToken)
     {
+        if (exception is RequestValidationException validationEx)
+        {
+            httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
+
+            var validationProblem = new ValidationProblemDetails(validationEx.Errors)
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "One or more validation errors occurred.",
+                Instance = httpContext.Request.Path
+            };
+
+            return await _problemDetailsService.TryWriteAsync(new ProblemDetailsContext
+            {
+                HttpContext = httpContext,
+                Exception = exception,
+                ProblemDetails = validationProblem
+            });
+        }
+
         var (statusCode, title, detail) = exception switch
         {
             NotFoundException ex => (StatusCodes.Status404NotFound, "Not Found", ex.Message),

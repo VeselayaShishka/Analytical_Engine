@@ -39,4 +39,21 @@ public class DataRecordRepository : Repository<DataRecord>, IDataRecordRepositor
     {
         await DbSet.AddRangeAsync(records, cancellationToken);
     }
+    
+    public async IAsyncEnumerable<string> StreamDataByVersionIdAsync(
+        Guid datasetVersionId,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var query = DbSet
+            .AsNoTracking()
+            .Where(r => r.DatasetVersionId == datasetVersionId)
+            .OrderBy(r => r.RowNumber)
+            .Select(r => r.Data)
+            .AsAsyncEnumerable();
+
+        await foreach (var data in query.WithCancellation(cancellationToken))
+        {
+            yield return data;
+        }
+    }
 }
