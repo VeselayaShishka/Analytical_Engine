@@ -1,4 +1,4 @@
-﻿using Analytical_Engine.Models.Entities;
+using Analytical_Engine.Models.Entities;
 
 namespace Analytical_Engine.Models;
 

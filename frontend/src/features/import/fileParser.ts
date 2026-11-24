@@ -1,4 +1,4 @@
-﻿import Papa from 'papaparse';
+import Papa from 'papaparse';
 import type { ColumnDataType } from '../../api/types';
 
 export interface InferredColumn {

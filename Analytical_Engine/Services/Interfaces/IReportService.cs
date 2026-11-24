@@ -1,4 +1,4 @@
-﻿using Analytical_Engine.Models.DTOs.Common;
+using Analytical_Engine.Models.DTOs.Common;
 using Analytical_Engine.Models.DTOs.Reports;
 
 namespace Analytical_Engine.Services.Interfaces;

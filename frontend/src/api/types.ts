@@ -1,4 +1,4 @@
-﻿export type UserRole = 'Analyst' | 'DataAdministrator';
+export type UserRole = 'Analyst' | 'DataAdministrator';
 
 export interface UserDto {
     id: string;

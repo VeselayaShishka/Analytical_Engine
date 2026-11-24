@@ -1,4 +1,4 @@
-﻿using Analytical_Engine.Extensions;
+using Analytical_Engine.Extensions;
 using Analytical_Engine.Models;
 using Analytical_Engine.Models.DTOs.Dashboard;
 using Analytical_Engine.Services.Interfaces;

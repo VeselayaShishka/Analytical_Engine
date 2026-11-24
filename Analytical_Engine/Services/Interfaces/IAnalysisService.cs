@@ -1,4 +1,4 @@
-﻿using Analytical_Engine.Models.DTOs.Analysis;
+using Analytical_Engine.Models.DTOs.Analysis;
 
 namespace Analytical_Engine.Services.Interfaces;
 

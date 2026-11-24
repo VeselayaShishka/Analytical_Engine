@@ -1,4 +1,4 @@
-﻿import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AnalyticsBuilderPage } from '../features/analytics/AnalyticsBuilderPage';
 import { LoginPage } from '../features/auth/LoginPage';
 import { ProtectedRoute } from '../features/auth/ProtectedRoute';

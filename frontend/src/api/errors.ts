@@ -1,4 +1,4 @@
-﻿import axios from 'axios';
+import axios from 'axios';
 import type { ImportResultDto, ImportRowErrorDto, ProblemDetails } from './types';
 
 export class ApiError extends Error {

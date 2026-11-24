@@ -1,4 +1,4 @@
-﻿namespace Analytical_Engine.Settings;
+namespace Analytical_Engine.Settings;
 
 public class SeedAdminSettings
 {

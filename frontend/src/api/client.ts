@@ -1,4 +1,4 @@
-﻿import axios from 'axios';
+import axios from 'axios';
 import { notifications } from '@mantine/notifications';
 import { getStoredAuth } from '../features/auth/authStorage';
 import { normalizeApiError } from './errors';

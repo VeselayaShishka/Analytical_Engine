@@ -1,4 +1,4 @@
-﻿using Analytical_Engine.Data.Repositories.Interfaces;
+using Analytical_Engine.Data.Repositories.Interfaces;
 using Analytical_Engine.Exceptions;
 using Analytical_Engine.Models.Entities;
 

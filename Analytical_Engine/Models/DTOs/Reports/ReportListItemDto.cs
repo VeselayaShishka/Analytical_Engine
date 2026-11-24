@@ -1,4 +1,4 @@
-﻿namespace Analytical_Engine.Models.DTOs.Reports;
+namespace Analytical_Engine.Models.DTOs.Reports;
 
 public class ReportListItemDto
 {

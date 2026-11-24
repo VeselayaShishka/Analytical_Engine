@@ -1,4 +1,4 @@
-﻿import type {
+import type {
     AnalysisQueryResponseDto,
     StatisticsResponseDto,
 } from '../../api/types';

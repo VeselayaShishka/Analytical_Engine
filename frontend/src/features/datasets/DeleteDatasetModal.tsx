@@ -1,4 +1,4 @@
-﻿import { Alert, Button, Group, Modal, Stack, Text } from '@mantine/core';
+import { Alert, Button, Group, Modal, Stack, Text } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';

@@ -1,4 +1,4 @@
-﻿using Analytical_Engine.Data.Repositories.Interfaces;
+using Analytical_Engine.Data.Repositories.Interfaces;
 using Analytical_Engine.Models;
 using Analytical_Engine.Models.Entities;
 using Analytical_Engine.Services.Interfaces;

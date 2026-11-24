@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using System.Text;
 using Analytical_Engine.Data;
 using Analytical_Engine.Data.Repositories;
@@ -103,6 +103,13 @@ builder.Services.AddCors(options =>
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
+    await using var db = await dbFactory.CreateDbContextAsync();
+    await db.Database.MigrateAsync();
+}
 
 await AdminSeeder.SeedAsync(app.Services);
 

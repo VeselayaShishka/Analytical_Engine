@@ -1,4 +1,4 @@
-﻿namespace Analytical_Engine.Exceptions;
+namespace Analytical_Engine.Exceptions;
 
 public class RequestValidationException : Exception
 {

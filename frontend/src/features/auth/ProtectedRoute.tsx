@@ -1,4 +1,4 @@
-﻿import { Center, Loader } from '@mantine/core';
+import { Center, Loader } from '@mantine/core';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import type { UserRole } from '../../api/types';
 import { useAuth } from './AuthContext';

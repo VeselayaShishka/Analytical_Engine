@@ -1,4 +1,4 @@
-﻿import { apiClient } from '../../api/client';
+import { apiClient } from '../../api/client';
 import type { ImportResultDto } from '../../api/types';
 import type { InferredColumn } from './fileParser';
 

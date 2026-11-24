@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using System.Text.Json;
 using Analytical_Engine.Models;
 using Analytical_Engine.Models.DTOs.Imports;

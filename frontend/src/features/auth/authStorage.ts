@@ -1,4 +1,4 @@
-﻿import type { UserDto } from '../../api/types';
+import type { UserDto } from '../../api/types';
 
 const AUTH_STORAGE_KEY = 'analytical_engine_auth';
 

@@ -1,4 +1,4 @@
-﻿using Analytical_Engine.Extensions;
+using Analytical_Engine.Extensions;
 using Analytical_Engine.Models;
 using Analytical_Engine.Models.DTOs.Common;
 using Analytical_Engine.Models.DTOs.Reports;

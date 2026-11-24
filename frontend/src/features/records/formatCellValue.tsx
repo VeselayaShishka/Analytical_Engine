@@ -1,4 +1,4 @@
-﻿import type { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Badge, Text } from '@mantine/core';
 import type { ColumnDataType } from '../../api/types';
 

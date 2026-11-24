@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using Analytical_Engine.Models.Entities;
 
 namespace Analytical_Engine.Models.DTOs.Reports;
