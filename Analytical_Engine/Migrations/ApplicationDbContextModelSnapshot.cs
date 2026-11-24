@@ -187,6 +187,9 @@ namespace Analytical_Engine.Migrations
                         .HasMaxLength(8000)
                         .HasColumnType("character varying(8000)");
 
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid");
+                    
                     b.HasKey("Id");
 
                     b.HasIndex("DatasetId");

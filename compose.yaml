@@ -8,7 +8,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -30,16 +30,16 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=${POSTGRES_DB:-analytical_engine};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-postgres}
       JwtSettings__Secret: ${JWT_SECRET:-SuperSecretKeyForDockerDeploymentAtLeast32Chars!}
-      JwtSettings__Issuer: AnalyticalEngine
-      JwtSettings__Audience: AnalyticalEngineClient
-      JwtSettings__ExpirationMinutes: 120
-      Cors__AllowedOrigins__0: "http://localhost:3000"
+      JwtSettings__Issuer: ${JWT_ISSUER:-AnalyticalEngine}
+      JwtSettings__Audience: ${JWT_AUDIENCE:-AnalyticalEngineClient}
+      JwtSettings__ExpirationMinutes: ${JWT_EXPIRATION_MINUTES:-120}
+      Cors__AllowedOrigins__0: "http://localhost:${FRONTEND_PORT:-3000}"
       Cors__AllowedOrigins__1: "http://localhost:5173"
-      SeedAdmin__Username: "admin"
+      SeedAdmin__Username: ${SEED_ADMIN_USERNAME:-admin}
       SeedAdmin__Email: ${SEED_ADMIN_EMAIL:-admin@example.com}
       SeedAdmin__Password: ${SEED_ADMIN_PASSWORD:-SuperAdminPassword2026!}
     ports:
-      - "5000:8080"
+      - "${BACKEND_PORT:-5000}:8080"
 
   frontend:
     build:
@@ -50,7 +50,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "3000:80"
+      - "${FRONTEND_PORT:-3000}:80"
 
 volumes:
   postgres_data:

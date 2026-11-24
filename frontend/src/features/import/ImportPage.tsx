@@ -5,6 +5,7 @@ import {
     Button,
     Checkbox,
     Group,
+    Pagination,
     Paper,
     Progress,
     Select,
@@ -47,6 +48,7 @@ import { uploadDatasetFile } from './importApi';
 import { ImportErrorsTable } from './ImportErrorsTable';
 
 const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB limit
+const SCHEMA_PAGE_SIZE = 10;
 
 const DATA_TYPE_OPTIONS: { value: ColumnDataType; label: string }[] = [
     { value: 'string', label: 'String (Text)' },
@@ -70,6 +72,7 @@ export function ImportPage() {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<ParsedFilePreview | null>(null);
     const [editableColumns, setEditableColumns] = useState<InferredColumn[]>([]);
+    const [schemaPage, setSchemaPage] = useState(1);
     const [parseError, setParseError] = useState<string | null>(null);
     const [isParsing, setIsParsing] = useState(false);
 
@@ -104,6 +107,7 @@ export function ImportPage() {
         setParseError(null);
         setPreview(null);
         setEditableColumns([]);
+        setSchemaPage(1);
         setImportResult(null);
         setServerError(null);
         setUploadProgress(0);
@@ -228,6 +232,7 @@ export function ImportPage() {
         setSelectedFile(null);
         setPreview(null);
         setEditableColumns([]);
+        setSchemaPage(1);
         setParseError(null);
         setImportResult(null);
         setServerError(null);
@@ -245,6 +250,15 @@ export function ImportPage() {
         Boolean(preview) &&
         !parseError &&
         !uploadMutation.isPending;
+
+    const totalSchemaPages = Math.max(
+        1,
+        Math.ceil(editableColumns.length / SCHEMA_PAGE_SIZE)
+    );
+    const paginatedColumns = editableColumns.slice(
+        (schemaPage - 1) * SCHEMA_PAGE_SIZE,
+        schemaPage * SCHEMA_PAGE_SIZE
+    );
 
     return (
         <Stack gap="md">
@@ -430,62 +444,91 @@ export function ImportPage() {
                             </Tabs.List>
 
                             <Tabs.Panel value="schema" pt="sm">
-                                <Table.ScrollContainer minWidth={560} mah={340}>
-                                    <Table striped withTableBorder stickyHeader verticalSpacing="xs">
-                                        <Table.Thead>
-                                            <Table.Tr>
-                                                <Table.Th w={60}>#</Table.Th>
-                                                <Table.Th>Column Name</Table.Th>
-                                                <Table.Th w={230}>Data Type</Table.Th>
-                                                <Table.Th w={110}>Nullable</Table.Th>
-                                            </Table.Tr>
-                                        </Table.Thead>
-                                        <Table.Tbody>
-                                            {editableColumns.map((col, index) => (
-                                                <Table.Tr key={col.name}>
-                                                    <Table.Td>
-                                                        <Text size="xs" c="dimmed" ff="monospace">
-                                                            {col.position + 1}
-                                                        </Text>
-                                                    </Table.Td>
-                                                    <Table.Td>
-                                                        <Text size="sm" fw={500}>
-                                                            {col.name}
-                                                        </Text>
-                                                    </Table.Td>
-                                                    <Table.Td>
-                                                        <Select
-                                                            size="xs"
-                                                            value={col.dataType}
-                                                            onChange={(val) =>
-                                                                handleColumnTypeChange(
-                                                                    index,
-                                                                    val as ColumnDataType | null
-                                                                )
-                                                            }
-                                                            data={DATA_TYPE_OPTIONS}
-                                                            disabled={uploadMutation.isPending}
-                                                            aria-label={`Data type for ${col.name}`}
-                                                        />
-                                                    </Table.Td>
-                                                    <Table.Td>
-                                                        <Checkbox
-                                                            checked={col.isNullable}
-                                                            onChange={(e) =>
-                                                                handleColumnNullableChange(
-                                                                    index,
-                                                                    e.currentTarget.checked
-                                                                )
-                                                            }
-                                                            disabled={uploadMutation.isPending}
-                                                            aria-label={`Nullable flag for ${col.name}`}
-                                                        />
-                                                    </Table.Td>
+                                <Stack gap="sm">
+                                    <Table.ScrollContainer minWidth={700}
+                                                           maxHeight={600}
+                                                           scrollAreaProps={{ scrollbars: 'xy' }}
+                                    >
+                                        <Table striped withTableBorder verticalSpacing="xs">
+                                            <Table.Thead>
+                                                <Table.Tr>
+                                                    <Table.Th w={60}>#</Table.Th>
+                                                    <Table.Th>Column Name</Table.Th>
+                                                    <Table.Th w={230}>Data Type</Table.Th>
+                                                    <Table.Th w={110}>Nullable</Table.Th>
                                                 </Table.Tr>
-                                            ))}
-                                        </Table.Tbody>
-                                    </Table>
-                                </Table.ScrollContainer>
+                                            </Table.Thead>
+                                            <Table.Tbody>
+                                                {paginatedColumns.map((col, idx) => {
+                                                    const actualIndex =
+                                                        (schemaPage - 1) * SCHEMA_PAGE_SIZE + idx;
+
+                                                    return (
+                                                        <Table.Tr key={col.name}>
+                                                            <Table.Td>
+                                                                <Text size="xs" c="dimmed" ff="monospace">
+                                                                    {col.position + 1}
+                                                                </Text>
+                                                            </Table.Td>
+                                                            <Table.Td>
+                                                                <Text size="sm" fw={500}>
+                                                                    {col.name}
+                                                                </Text>
+                                                            </Table.Td>
+                                                            <Table.Td>
+                                                                <Select
+                                                                    size="xs"
+                                                                    value={col.dataType}
+                                                                    onChange={(val) =>
+                                                                        handleColumnTypeChange(
+                                                                            actualIndex,
+                                                                            val as ColumnDataType | null
+                                                                        )
+                                                                    }
+                                                                    data={DATA_TYPE_OPTIONS}
+                                                                    disabled={uploadMutation.isPending}
+                                                                    aria-label={`Data type for ${col.name}`}
+                                                                />
+                                                            </Table.Td>
+                                                            <Table.Td>
+                                                                <Checkbox
+                                                                    checked={col.isNullable}
+                                                                    onChange={(e) =>
+                                                                        handleColumnNullableChange(
+                                                                            actualIndex,
+                                                                            e.currentTarget.checked
+                                                                        )
+                                                                    }
+                                                                    disabled={uploadMutation.isPending}
+                                                                    aria-label={`Nullable flag for ${col.name}`}
+                                                                />
+                                                            </Table.Td>
+                                                        </Table.Tr>
+                                                    );
+                                                })}
+                                            </Table.Tbody>
+                                        </Table>
+                                    </Table.ScrollContainer>
+
+                                    {totalSchemaPages > 1 && (
+                                        <Group justify="space-between" align="center" wrap="wrap">
+                                            <Text size="xs" c="dimmed">
+                                                Showing {(schemaPage - 1) * SCHEMA_PAGE_SIZE + 1}–
+                                                {Math.min(
+                                                    schemaPage * SCHEMA_PAGE_SIZE,
+                                                    editableColumns.length
+                                                )}{' '}
+                                                of {editableColumns.length} columns
+                                            </Text>
+                                            <Pagination
+                                                size="sm"
+                                                value={schemaPage}
+                                                onChange={setSchemaPage}
+                                                total={totalSchemaPages}
+                                            />
+                                        </Group>
+                                    )}
+                                </Stack>
                             </Tabs.Panel>
 
                             <Tabs.Panel value="preview" pt="sm">

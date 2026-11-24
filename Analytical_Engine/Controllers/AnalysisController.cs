@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Analytical_Engine.Controllers;
 
+/// <summary>
+/// Аналітичний рушій для групування, фільтрації та розрахунку описової статистики.
+/// </summary>
 [ApiController]
 [Route("api/analysis")]
 [Authorize(Roles = $"{Roles.Analyst},{Roles.DataAdministrator}")]
@@ -19,6 +22,12 @@ public class AnalysisController : ControllerBase
         _analysisService = analysisService;
     }
 
+    /// <summary>
+    /// Виконання аналітичного агрегаційного запиту (Group By, Count, Sum, Avg, Min, Max) над даними версії.
+    /// </summary>
+    /// <param name="request">Параметри запиту: фільтри, колонка групування, агрегатні функції, пагінація.</param>
+    /// <param name="cancellationToken">Токен скасування операції.</param>
+    /// <returns>Результати аналізу з числовими даними та метаданими виконання.</returns>
     [HttpPost("query")]
     [ProducesResponseType(typeof(AnalysisResultDto<IReadOnlyList<GroupResultItem>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
@@ -36,6 +45,12 @@ public class AnalysisController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// Розрахунок повної описової статистики (середнє, дисперсія, СКВ за алгоритмом Велфорда, медіана, мін, макс) для числових колонок.
+    /// </summary>
+    /// <param name="request">Параметри розрахунку: ідентифікатор версії датасету, цільова колонка, фільтри.</param>
+    /// <param name="cancellationToken">Токен скасування операції.</param>
+    /// <returns>Статистичні показники розподілу даних.</returns>
     [HttpPost("statistics")]
     [ProducesResponseType(typeof(AnalysisResultDto<IReadOnlyList<StatisticsResult>>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]

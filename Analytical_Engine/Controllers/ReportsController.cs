@@ -8,6 +8,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Analytical_Engine.Controllers;
 
+/// <summary>
+/// Збереження та перегляд аналітичних звітів і результатів розрахунків.
+/// </summary>
 [ApiController]
 [Route("api/reports")]
 [Authorize(Roles = $"{Roles.Analyst},{Roles.DataAdministrator}")]
@@ -20,6 +23,12 @@ public class ReportsController : ControllerBase
         _reportService = reportService;
     }
 
+    /// <summary>
+    /// Збереження нового аналітичного звіту (конфігурація, графік та отримані агрегації).
+    /// </summary>
+    /// <param name="dto">Параметри звіту (назва, тип, конфігурація та зліпок результатів).</param>
+    /// <param name="cancellationToken">Токен скасування операції.</param>
+    /// <returns>Створений звіт.</returns>
     [HttpPost]
     [RequestSizeLimit(1_048_576)] // Ограничение размера тела запроса (1 МБ)
     [ProducesResponseType(typeof(ReportResponseDto), StatusCodes.Status201Created)]
@@ -41,6 +50,15 @@ public class ReportsController : ControllerBase
             created);
     }
 
+    /// <summary>
+    /// Отримання пагінованого переліку збережених звітів з можливістю фільтрації за версією або типом звіту.
+    /// </summary>
+    /// <param name="pageNumber">Номер сторінки (за замовчуванням 1).</param>
+    /// <param name="pageSize">Кількість елементів на сторінці (за замовчуванням 20).</param>
+    /// <param name="datasetVersionId">Опціональний фільтр за ідентифікатором версії датасету.</param>
+    /// <param name="reportType">Опціональний фільтр за типом звіту (Aggregation або Statistics).</param>
+    /// <param name="cancellationToken">Токен скасування операції.</param>
+    /// <returns>Пагінований список звітів.</returns>
     [HttpGet]
     [ProducesResponseType(typeof(PagedResultDto<ReportListItemDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -63,6 +81,12 @@ public class ReportsController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// Отримання повних даних збереженого аналітичного звіту за ідентифікатором.
+    /// </summary>
+    /// <param name="id">Унікальний ідентифікатор звіту.</param>
+    /// <param name="cancellationToken">Токен скасування операції.</param>
+    /// <returns>Детальні дані звіту, включно зі збереженими результатами розрахунку.</returns>
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(ReportResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -79,6 +103,11 @@ public class ReportsController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// Видалення збереженого звіту.
+    /// </summary>
+    /// <param name="id">Унікальний ідентифікатор звіту.</param>
+    /// <param name="cancellationToken">Токен скасування операції.</param>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]

@@ -8,6 +8,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Analytical_Engine.Controllers;
 
+/// <summary>
+/// Імпорт відкритих даних з файлів CSV та JSON.
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 [Authorize(Roles = $"{Roles.Analyst},{Roles.DataAdministrator}")]
@@ -26,6 +29,11 @@ public class ImportController : ControllerBase
         _jsonImportService = jsonImportService;
     }
 
+    /// <summary>
+    /// Завантаження файлу CSV/JSON, валідація задекларованої схеми та створення нової версії датасету.
+    /// </summary>
+    /// <param name="request">Форма з файлом даних, ідентифікатором датасету та JSON-схемою типів колонок.</param>
+    /// <returns>Результат імпорту з кількістю оброблених записів або детальним списком помилок валідації рядків.</returns>
     [HttpPost("dataset")]
     [RequestSizeLimit(MaxImportFileSizeBytes)]
     [RequestFormLimits(MultipartBodyLengthLimit = MaxImportFileSizeBytes)]

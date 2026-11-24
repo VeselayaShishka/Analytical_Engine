@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Analytical_Engine.Controllers;
 
+/// <summary>
+/// Контролер автентифікації та керування сесіями користувачів.
+/// </summary>
 [ApiController]
 [Route("api/[controller]")]
 public class AuthController : ControllerBase
@@ -18,6 +21,12 @@ public class AuthController : ControllerBase
         _authService = authService;
     }
 
+    /// <summary>
+    /// Реєстрація нового користувача в системі.
+    /// </summary>
+    /// <param name="dto">Дані для реєстрації (ім'я, email, пароль, бажана роль).</param>
+    /// <param name="cancellationToken">Токен скасування операції.</param>
+    /// <returns>Інформація про створеного користувача.</returns>
     [HttpPost("register")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(UserResponseDto), StatusCodes.Status201Created)]
@@ -41,6 +50,12 @@ public class AuthController : ControllerBase
         return StatusCode(StatusCodes.Status201Created, result.Data);
     }
 
+    /// <summary>
+    /// Автентифікація користувача за email та паролем з видачею JWT токена.
+    /// </summary>
+    /// <param name="dto">Облікові дані (email та пароль).</param>
+    /// <param name="cancellationToken">Токен скасування операції.</param>
+    /// <returns>JWT токен та базові дані користувача.</returns>
     [HttpPost("login")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
@@ -64,6 +79,11 @@ public class AuthController : ControllerBase
         return Ok(result.Data);
     }
 
+    /// <summary>
+    /// Отримання профілю поточного авторизованого користувача.
+    /// </summary>
+    /// <param name="cancellationToken">Токен скасування операції.</param>
+    /// <returns>Дані профілю поточного користувача.</returns>
     [HttpGet("me")]
     [Authorize]
     [ProducesResponseType(typeof(UserResponseDto), StatusCodes.Status200OK)]

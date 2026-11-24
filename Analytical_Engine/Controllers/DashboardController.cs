@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Analytical_Engine.Controllers;
 
+/// <summary>
+/// Зведена статистика системи для головного екрана.
+/// </summary>
 [ApiController]
 [Route("api/dashboard")]
 [Authorize(Roles = $"{Roles.Analyst},{Roles.DataAdministrator}")]
@@ -19,6 +22,11 @@ public class DashboardController : ControllerBase
         _dashboardService = dashboardService;
     }
 
+    /// <summary>
+    /// Отримання зведених статистичних показників системи (загальна кількість датасетів, записів, звітів, активність).
+    /// </summary>
+    /// <param name="cancellationToken">Токен скасування операції.</param>
+    /// <returns>Зведені аналітичні метрики панелі приладів.</returns>
     [HttpGet("summary")]
     [ProducesResponseType(typeof(DashboardSummaryDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetSummary(CancellationToken cancellationToken)
