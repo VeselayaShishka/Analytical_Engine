@@ -1,6 +1,6 @@
 namespace Analytical_Engine.Models.DTOs.Imports;
 
-public class ImportResultDto
+public record ImportResultDto
 {
     public bool IsSuccess { get; set; }
     public string Message { get; set; } = string.Empty;

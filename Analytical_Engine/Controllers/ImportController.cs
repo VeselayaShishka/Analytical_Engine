@@ -159,19 +159,32 @@ public class ImportController : ControllerBase
             schema,
             metadata);
 
+        var dto = new ImportResultDto
+        {
+            IsSuccess = result.IsSuccess,
+            Message = result.Message,
+            DatasetVersionId = result.Version?.Id,
+            Version = result.Version?.Version,
+            ImportedRecords = result.Version?.RecordCount ?? 0,
+            Errors = result.Errors
+                .Select(e => new ImportErrorDto
+                {
+                    RowNumber = e.RowNumber,
+                    ErrorMessages = e.ErrorMessages
+                })
+                .ToList()
+        };
+
         if (!result.IsSuccess)
         {
-            if (result.Errors.Count > 0)
-            {
-                return BadRequest(result);
-            }
-
-            return Problem(
-                statusCode: StatusCodes.Status400BadRequest,
-                title: "Import Error",
-                detail: result.Message);
+            return result.Errors.Count > 0
+                ? BadRequest(dto)
+                : Problem(
+                    statusCode: StatusCodes.Status400BadRequest,
+                    title: "Import Error",
+                    detail: result.Message);
         }
 
-        return Ok(result);
+        return Ok(dto);
     }
 }

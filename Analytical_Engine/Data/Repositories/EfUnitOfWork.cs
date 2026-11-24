@@ -41,7 +41,7 @@ public class EfUnitOfWork : IUnitOfWork
 
     public IReportRepository Reports =>
         _reports ??= new ReportRepository(_context);
-    
+
     public async Task BeginTransactionAsync(CancellationToken ct = default)
     {
         _transaction = await _context.Database.BeginTransactionAsync(ct);
@@ -98,6 +98,24 @@ public class EfUnitOfWork : IUnitOfWork
             {
                 _transaction = null;
             }
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_transaction == null)
+            return;
+
+        var transaction = _transaction;
+        _transaction = null;
+
+        try
+        {
+            transaction.Rollback();
+        }
+        finally
+        {
+            transaction.Dispose();
         }
     }
 }

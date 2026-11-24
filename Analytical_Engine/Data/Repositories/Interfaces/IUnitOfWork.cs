@@ -1,6 +1,6 @@
 ﻿namespace Analytical_Engine.Data.Repositories.Interfaces;
 
-public interface IUnitOfWork : IAsyncDisposable
+public interface IUnitOfWork : IAsyncDisposable, IDisposable
 {
     IUserRepository Users { get; }
     IDatasetRepository Datasets { get; }

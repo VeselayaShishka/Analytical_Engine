@@ -23,22 +23,15 @@ public static class DatasetMappingExtensions
         this DatasetVersion version,
         bool includeColumns = false)
     {
-        return new DatasetVersionResponseDto
-        {
-            Id = version.Id,
-            DatasetId = version.DatasetId,
-            Version = version.Version,
-            Format = version.Format,
-            FileName = version.FileName,
-            RecordCount = version.RecordCount,
-            Created = version.Created,
-            Columns = includeColumns
-                ? version.Columns
-                    .OrderBy(c => c.Position)
-                    .Select(c => c.ToResponseDto())
-                    .ToList()
-                : new List<DatasetColumnResponseDto>()
-        };
+        return new DatasetVersionResponseDto(
+            version.Id,
+            version.DatasetId,
+            VersionNumber: version.Version,
+            SourceFileName: version.FileName,
+            FileFormat: version.Format,
+            RecordCount: version.RecordCount,
+            CreatedAt: version.Created
+        );
     }
 
     public static DatasetColumnResponseDto ToResponseDto(this DatasetColumn column)
