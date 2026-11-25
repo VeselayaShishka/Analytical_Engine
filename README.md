@@ -1,8 +1,5 @@
 ﻿# Analytical Engine
 
-> **Course:** Веб‑технології та веб‑дизайн (3‑й курс) – Одеська політехніка  
-> **Variant 19:** *«Аналітична панель відкритих даних»*
-
 A full-stack web application for managing, analysing, and visualising open data sets. Key capabilities include:
 
 - **Domain model** – `User`, `Dataset`, `DatasetVersion`, `DatasetColumn`, `DataRecord`, `Report`, `ErrorLog`.
@@ -134,12 +131,4 @@ All 76 tests should pass. *(Warnings regarding EF Core minor version resolution 
 
 ## Sample Data
 
-A demo dataset (`sample_data/valid_analytics_data.csv`) is included in the repository. Use the **Import → Dataset** screen in the web UI to upload it, inspect rows, and build charts in the **Analytics Builder**.
-
----
-
-## Contribution & License
-
-- Fork the repository, create a feature branch, and submit a Pull Request.
-- Follow the project code style (C# 12/13, nullable reference types enabled, `async/await`).
-- Licensed under the **MIT License** – see `LICENSE` for details.
+A demo dataset (`TestData/ITU_GCI.csv`) is included in the repository. Use the **Import → Dataset** screen in the web UI to upload it, inspect rows, and build charts in the **Analytics Builder**.
