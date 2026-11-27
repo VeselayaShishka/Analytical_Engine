@@ -37,6 +37,7 @@ public class ColumnValueConverter
     public bool TryConvert(JsonElement element, string dataType, out object? value)
     {
         value = null;
+        //minor changes for QA lab
 
         if (element.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
         {
