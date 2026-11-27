@@ -36,6 +36,7 @@ public class ColumnValueConverter
 
     public bool TryConvert(JsonElement element, string dataType, out object? value)
     {
+        return false;
         value = null;
         //minor changes for QA lab
 
